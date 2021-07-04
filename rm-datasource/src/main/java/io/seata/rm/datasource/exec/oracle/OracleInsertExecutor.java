@@ -63,11 +63,14 @@ public class OracleInsertExecutor extends BaseInsertExecutor implements Sequence
         Boolean isContainsPk = containsPK();
         //when there is only one pk in the table
         if (isContainsPk) {
+            //写明了插入列和插入的主键值
             pkValuesMap = getPkValuesByColumn();
         } else if (containsColumns()) {
+            //有写明插入列但没有插入主键值，则是默认/自动递增值
             String columnName = getTableMeta().getPrimaryKeyOnlyName().get(0);
             pkValuesMap = Collections.singletonMap(columnName, getGeneratedKeys());
         } else {
+            //没写插入列（则值一定全部写了，包括主键值）
             pkValuesMap = getPkValuesByColumn();
         }
         return pkValuesMap;
@@ -75,8 +78,11 @@ public class OracleInsertExecutor extends BaseInsertExecutor implements Sequence
 
     @Override
     public Map<String,List<Object>> getPkValuesByColumn() throws SQLException {
+        //从Statement获取主键值
         Map<String,List<Object>> pkValuesMap  = parsePkValuesFromStatement();
+        //拿出所有主键
         String pkKey = pkValuesMap.keySet().iterator().next();
+        //拿出主键值（该处默认单主键）
         List<Object> pkValues = pkValuesMap.get(pkKey);
 
         if (!pkValues.isEmpty() && pkValues.get(0) instanceof SqlSequenceExpr) {

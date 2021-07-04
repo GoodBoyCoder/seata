@@ -89,6 +89,7 @@ public class MySQLInsertExecutor extends BaseInsertExecutor implements Defaultab
                 pkValuesMap = getPkValuesByColumn();
             }
             else if (containsColumns()) {
+                //自动递增策略
                 pkValuesMap = getPkValuesByAuto();
             }
             else {

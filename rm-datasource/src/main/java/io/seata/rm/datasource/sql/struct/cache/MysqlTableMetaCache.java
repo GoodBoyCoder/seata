@@ -46,6 +46,7 @@ public class MysqlTableMetaCache extends AbstractTableMetaCache {
 
     @Override
     protected String getCacheKey(Connection connection, String tableName, String resourceId) {
+        //resourceId是url来着
         StringBuilder cacheKey = new StringBuilder(resourceId);
         cacheKey.append(".");
         //remove single quote and separate it to catalogName and tableName

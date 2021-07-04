@@ -104,15 +104,20 @@ public abstract class BaseMySQLRecognizer extends BaseRecognizer {
         } else if (SQLType.DELETE == sqlType) {
             limit = ((MySqlDeleteStatement)sqlStatement).getLimit();
         }
+        //这里直接忽略了查询语句，该识别器主要是为了undo_log语句的构建和执行，而对于查询没有必要添加undo_log,也就不会掉到这里
         if (limit != null) {
             StringBuilder builder = new StringBuilder(" LIMIT ");
             SQLIntegerExpr expr;
             if (limit.getOffset() != null) {
+                //开始下标取值
                 if (limit.getOffset() instanceof SQLVariantRefExpr) {
+                    //如果是占位符表达式，获取对应参数
                     builder.append("?,");
                     Map<Integer, ArrayList<Object>> parameters = parametersHolder.getParameters();
+                    //limit语句参数一定是最后的（？）
                     paramAppenderList.add(parameters.get(parameters.size() - 1));
                 } else {
+                    //直接拼接
                     expr = (SQLIntegerExpr)limit.getOffset();
                     builder.append(expr.getNumber()).append(",");
                 }

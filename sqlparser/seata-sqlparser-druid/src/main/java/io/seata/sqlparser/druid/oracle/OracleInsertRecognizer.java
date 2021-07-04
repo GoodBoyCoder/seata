@@ -127,6 +127,7 @@ public class OracleInsertRecognizer extends BaseOracleRecognizer implements SQLI
                 } else if (expr instanceof SQLMethodInvokeExpr) {
                     row.add(SqlMethodExpr.get());
                 } else if (expr instanceof SQLSequenceExpr) {
+                    //自增序列生成器
                     SQLSequenceExpr sequenceExpr = (SQLSequenceExpr) expr;
                     String sequence = sequenceExpr.getSequence().getSimpleName();
                     String function = sequenceExpr.getFunction().name;

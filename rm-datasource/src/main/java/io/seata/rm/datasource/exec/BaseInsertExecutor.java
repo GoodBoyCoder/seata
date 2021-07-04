@@ -117,6 +117,7 @@ public abstract class BaseInsertExecutor<T, S extends Statement> extends Abstrac
             }
             return pkIndexMap;
         }
+        //没有写明插入列的情况
         int pkIndex = -1;
         Map<String, ColumnMeta> allColumns = getTableMeta().getAllColumns();
         for (Map.Entry<String, ColumnMeta> entry : allColumns.entrySet()) {
@@ -144,9 +145,10 @@ public abstract class BaseInsertExecutor<T, S extends Statement> extends Abstrac
         boolean ps = true;
         if (statementProxy instanceof PreparedStatementProxy) {
             PreparedStatementProxy preparedStatementProxy = (PreparedStatementProxy) statementProxy;
-
+            //获取插入列的数据
             List<List<Object>> insertRows = recognizer.getInsertRows(pkIndexMap.values());
             if (insertRows != null && !insertRows.isEmpty()) {
+                //获取参数列表
                 Map<Integer, ArrayList<Object>> parameters = preparedStatementProxy.getParameters();
                 final int rowSize = insertRows.size();
                 int totalPlaceholderNum = -1;

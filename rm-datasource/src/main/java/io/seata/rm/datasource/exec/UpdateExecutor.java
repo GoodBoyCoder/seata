@@ -126,6 +126,7 @@ public class UpdateExecutor<T, S extends Statement> extends AbstractDMLBaseExecu
 
     private String buildAfterImageSQL(TableMeta tableMeta, TableRecords beforeImage) throws SQLException {
         StringBuilder prefix = new StringBuilder("SELECT ");
+        //这里不通过语句去构建条件，避免语句的执行结果会改变先前的条件，因而改用主键和执行前镜像来构建
         String whereSql = SqlGenerateUtils.buildWhereConditionByPKs(tableMeta.getPrimaryKeyOnlyName(), beforeImage.pkRows().size(), getDbType());
         String suffix = " FROM " + getFromTableInSQL() + " WHERE " + whereSql;
         StringJoiner selectSQLJoiner = new StringJoiner(", ", prefix.toString(), suffix);

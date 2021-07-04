@@ -92,6 +92,7 @@ public class MySQLUpdateRecognizer extends BaseMySQLRecognizer implements SQLUpd
         List<Object> list = new ArrayList<>(updateSetItems.size());
         for (SQLUpdateSetItem updateSetItem : updateSetItems) {
             SQLExpr expr = updateSetItem.getValue();
+            //为啥只判断两种，不会有其他类型的情况吗
             if (expr instanceof SQLValuableExpr) {
                 list.add(((SQLValuableExpr)expr).getValue());
             } else if (expr instanceof SQLVariantRefExpr) {

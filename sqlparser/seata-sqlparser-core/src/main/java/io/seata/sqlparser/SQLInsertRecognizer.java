@@ -27,6 +27,7 @@ public interface SQLInsertRecognizer extends SQLRecognizer {
 
     /**
      * insert columns is empty.
+     *
      * @return true: empty. false: not empty.
      */
     boolean insertColumnsIsEmpty();
@@ -49,12 +50,13 @@ public interface SQLInsertRecognizer extends SQLRecognizer {
     /**
      * Gets insert
      *
-     * @return  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     * @return VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      */
     List<String> getInsertParamsValue();
 
     /**
      * Gets DuplicateKey columns.
+     * MySQL的可重复插入策略，可选择覆盖主键重复的插入（独有语法）
      *
      * @return the duplicateKey columns
      */

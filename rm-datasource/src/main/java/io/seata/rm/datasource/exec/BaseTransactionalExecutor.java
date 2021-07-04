@@ -104,8 +104,10 @@ public abstract class BaseTransactionalExecutor<T, S extends Statement> implemen
 
     @Override
     public T execute(Object... args) throws Throwable {
+        //获取全局事务ID
         String xid = RootContext.getXID();
         if (xid != null) {
+            //分支绑定全局事务
             statementProxy.getConnectionProxy().bind(xid);
         }
 
@@ -276,6 +278,7 @@ public abstract class BaseTransactionalExecutor<T, S extends Statement> implemen
         }
         ConnectionProxy connectionProxy = statementProxy.getConnectionProxy();
 
+        //建立行锁
         TableRecords lockKeyRecords = sqlRecognizer.getSQLType() == SQLType.DELETE ? beforeImage : afterImage;
         String lockKeys = buildLockKey(lockKeyRecords);
         if (null != lockKeys) {
@@ -375,6 +378,7 @@ public abstract class BaseTransactionalExecutor<T, S extends Statement> implemen
      * @throws SQLException the sql exception
      */
     protected TableRecords buildTableRecords(Map<String, List<Object>> pkValuesMap) throws SQLException {
+        //获取主键名
         List<String> pkColumnNameList = getTableMeta().getPrimaryKeyOnlyName();
         StringBuilder sql = new StringBuilder()
             .append("SELECT * FROM ")

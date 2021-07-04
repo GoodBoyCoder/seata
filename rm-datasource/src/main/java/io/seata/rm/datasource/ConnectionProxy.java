@@ -276,8 +276,10 @@ public class ConnectionProxy extends AbstractConnectionProxy {
 
     @Override
     public void rollback() throws SQLException {
+        //先执行本地回滚
         targetConnection.rollback();
         if (context.inGlobalTransaction() && context.isBranchRegistered()) {
+            //报告本地事务执行失败
             report(false);
         }
         context.reset();

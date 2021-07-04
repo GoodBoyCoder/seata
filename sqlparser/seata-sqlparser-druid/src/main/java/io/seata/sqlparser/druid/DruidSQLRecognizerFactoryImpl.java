@@ -43,6 +43,7 @@ class DruidSQLRecognizerFactoryImpl implements SQLRecognizerFactory {
         }
         if (asts.size() > 1 && !(asts.stream().allMatch(statement -> statement instanceof SQLUpdateStatement)
                 || asts.stream().allMatch(statement -> statement instanceof SQLDeleteStatement))) {
+            //支持相同SQL类型的多条SQL执行
             throw new UnsupportedOperationException("ONLY SUPPORT SAME TYPE (UPDATE OR DELETE) MULTI SQL -" + sql);
         }
         List<SQLRecognizer> recognizers = null;

@@ -108,6 +108,9 @@ public class MySQLInsertRecognizer extends BaseMySQLRecognizer implements SQLIns
         return list;
     }
 
+    /**
+     * insert into tableName values(), (), ()...一次性插入多行的可能
+     */
     @Override
     public List<List<Object>> getInsertRows(Collection<Integer> primaryKeyIndex) {
         List<SQLInsertStatement.ValuesClause> valuesClauses = ast.getValuesList();
@@ -119,15 +122,20 @@ public class MySQLInsertRecognizer extends BaseMySQLRecognizer implements SQLIns
             for (int i = 0, len = exprs.size(); i < len; i++) {
                 SQLExpr expr = exprs.get(i);
                 if (expr instanceof SQLNullExpr) {
+                    //空值，MySQL允许NULL值插入
                     row.add(Null.get());
                 } else if (expr instanceof SQLValuableExpr) {
+                    //值
                     row.add(((SQLValuableExpr) expr).getValue());
                 } else if (expr instanceof SQLVariantRefExpr) {
+                    //占位符类型
                     row.add(((SQLVariantRefExpr) expr).getName());
                 } else if (expr instanceof SQLMethodInvokeExpr) {
+                    //函数类型
                     row.add(SqlMethodExpr.get());
                 } else {
                     if (primaryKeyIndex.contains(i)) {
+                        //包含主键但是匹配不到类型
                         throw new SQLParsingException("Unknown SQLExpr: " + expr.getClass() + " " + expr);
                     }
                     row.add(NotPlaceholderExpr.get());
@@ -142,9 +150,11 @@ public class MySQLInsertRecognizer extends BaseMySQLRecognizer implements SQLIns
         List<SQLInsertStatement.ValuesClause> valuesList = ast.getValuesList();
         List<String> list = new ArrayList<>();
         for (SQLInsertStatement.ValuesClause m: valuesList) {
+            //直接获取插入的值value(,,)中的VALUE被去掉了（只会是全大写吗？是,druid内部会格式化）
             String values = m.toString().replace("VALUES", "").trim();
             // when all params is constant, the length of values less than 1
             if (values.length() > 1) {
+                //去括号
                 values = values.substring(1,values.length() - 1);
             }
             list.add(values);

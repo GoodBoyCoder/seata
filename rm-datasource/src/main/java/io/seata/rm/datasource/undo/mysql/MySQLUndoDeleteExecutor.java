@@ -67,6 +67,7 @@ public class MySQLUndoDeleteExecutor extends AbstractUndoExecutor {
         }
         Row row = beforeImageRows.get(0);
         List<Field> fields = new ArrayList<>(row.nonPrimaryKeys());
+        //把主键放在最后
         fields.addAll(getOrderedPkList(beforeImage,row,JdbcConstants.MYSQL));
 
         // delete sql undo log before image all field come from table meta, need add escape.
