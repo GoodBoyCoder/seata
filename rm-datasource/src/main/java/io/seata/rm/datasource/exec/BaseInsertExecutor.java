@@ -155,11 +155,13 @@ public abstract class BaseInsertExecutor<T, S extends Statement> extends Abstrac
                 for (List<Object> row : insertRows) {
                     // oracle insert sql statement specify RETURN_GENERATED_KEYS will append :rowid on sql end
                     // insert parameter count will than the actual +1
+                    //遍历每一个values()
                     if (row.isEmpty()) {
                         continue;
                     }
                     int currentRowPlaceholderNum = -1;
                     for (Object r : row) {
+                        //遍历一个values，并对其中的占位符计数
                         if (PLACEHOLDER.equals(r)) {
                             totalPlaceholderNum += 1;
                             currentRowPlaceholderNum += 1;
@@ -169,14 +171,18 @@ public abstract class BaseInsertExecutor<T, S extends Statement> extends Abstrac
                     int pkIndex;
                     List<Object> pkValues;
                     for (Map.Entry<String, Integer> entry : pkIndexMap.entrySet()) {
+                        //假设单主键的情况，就是拿到主键对应的列名
                         pkKey = entry.getKey();
                         pkValues = pkValuesMap.get(pkKey);
                         if (Objects.isNull(pkValues)) {
                             pkValues = new ArrayList<>(rowSize);
                         }
+                        //主键对应的index
                         pkIndex = entry.getValue();
+                        //从插入列中尝试获取值
                         Object pkValue = row.get(pkIndex);
                         if (PLACEHOLDER.equals(pkValue)) {
+                            //如果值是占位符，计算在pkIndex之前的占位符有多少
                             int currentRowNotPlaceholderNumBeforePkIndex = 0;
                             for (int n = 0, len = row.size(); n < len; n++) {
                                 Object r = row.get(n);
@@ -188,6 +194,7 @@ public abstract class BaseInsertExecutor<T, S extends Statement> extends Abstrac
                             ArrayList<Object> parameter = parameters.get(idx + 1);
                             pkValues.addAll(parameter);
                         } else {
+                            //否则直接添加
                             pkValues.add(pkValue);
                         }
                         if (!pkValuesMap.containsKey(ColumnUtils.delEscape(pkKey, getDbType()))) {
@@ -197,6 +204,7 @@ public abstract class BaseInsertExecutor<T, S extends Statement> extends Abstrac
                 }
             }
         } else {
+            //没有占位符的情况，即全部写明在SQL语句中，直接根据主键index获取
             ps = false;
             List<List<Object>> insertRows = recognizer.getInsertRows(pkIndexMap.values());
             for (List<Object> row : insertRows) {
