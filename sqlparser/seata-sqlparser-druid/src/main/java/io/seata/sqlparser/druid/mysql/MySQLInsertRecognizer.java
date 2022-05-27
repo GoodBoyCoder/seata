@@ -15,30 +15,27 @@
  */
 package io.seata.sqlparser.druid.mysql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLStatement;
+import com.alibaba.druid.sql.ast.expr.SQLBinaryOpExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.expr.SQLMethodInvokeExpr;
 import com.alibaba.druid.sql.ast.expr.SQLNullExpr;
 import com.alibaba.druid.sql.ast.expr.SQLValuableExpr;
 import com.alibaba.druid.sql.ast.expr.SQLVariantRefExpr;
-import com.alibaba.druid.sql.ast.expr.SQLBinaryOpExpr;
 import com.alibaba.druid.sql.ast.statement.SQLExprTableSource;
 import com.alibaba.druid.sql.ast.statement.SQLInsertStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlInsertStatement;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlOutputVisitor;
-
 import io.seata.common.util.CollectionUtils;
 import io.seata.sqlparser.SQLInsertRecognizer;
-import io.seata.sqlparser.SQLParsingException;
 import io.seata.sqlparser.SQLType;
 import io.seata.sqlparser.struct.NotPlaceholderExpr;
 import io.seata.sqlparser.struct.Null;
 import io.seata.sqlparser.struct.SqlMethodExpr;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * The type My sql insert recognizer.
@@ -102,15 +99,12 @@ public class MySQLInsertRecognizer extends BaseMySQLRecognizer implements SQLIns
             if (expr instanceof SQLIdentifierExpr) {
                 list.add(((SQLIdentifierExpr)expr).getName());
             } else {
-                throw new SQLParsingException("Unknown SQLExpr: " + expr.getClass() + " " + expr);
+                wrapSQLParsingException(expr);
             }
         }
         return list;
     }
 
-    /**
-     * insert into tableName values(), (), ()...一次性插入多行的可能
-     */
     @Override
     public List<List<Object>> getInsertRows(Collection<Integer> primaryKeyIndex) {
         List<SQLInsertStatement.ValuesClause> valuesClauses = ast.getValuesList();
@@ -122,21 +116,16 @@ public class MySQLInsertRecognizer extends BaseMySQLRecognizer implements SQLIns
             for (int i = 0, len = exprs.size(); i < len; i++) {
                 SQLExpr expr = exprs.get(i);
                 if (expr instanceof SQLNullExpr) {
-                    //空值，MySQL允许NULL值插入
                     row.add(Null.get());
                 } else if (expr instanceof SQLValuableExpr) {
-                    //值
                     row.add(((SQLValuableExpr) expr).getValue());
                 } else if (expr instanceof SQLVariantRefExpr) {
-                    //占位符类型
                     row.add(((SQLVariantRefExpr) expr).getName());
                 } else if (expr instanceof SQLMethodInvokeExpr) {
-                    //函数类型
                     row.add(SqlMethodExpr.get());
                 } else {
                     if (primaryKeyIndex.contains(i)) {
-                        //包含主键但是匹配不到类型
-                        throw new SQLParsingException("Unknown SQLExpr: " + expr.getClass() + " " + expr);
+                        wrapSQLParsingException(expr);
                     }
                     row.add(NotPlaceholderExpr.get());
                 }
@@ -150,11 +139,9 @@ public class MySQLInsertRecognizer extends BaseMySQLRecognizer implements SQLIns
         List<SQLInsertStatement.ValuesClause> valuesList = ast.getValuesList();
         List<String> list = new ArrayList<>();
         for (SQLInsertStatement.ValuesClause m: valuesList) {
-            //直接获取插入的值value(,,)中的VALUE被去掉了（只会是全大写吗？是,druid内部会格式化）
             String values = m.toString().replace("VALUES", "").trim();
             // when all params is constant, the length of values less than 1
             if (values.length() > 1) {
-                //去括号
                 values = values.substring(1,values.length() - 1);
             }
             list.add(values);
@@ -174,9 +161,14 @@ public class MySQLInsertRecognizer extends BaseMySQLRecognizer implements SQLIns
             if (expr instanceof SQLIdentifierExpr) {
                 list.add(((SQLIdentifierExpr)expr).getName());
             } else {
-                throw new SQLParsingException("Unknown SQLExpr: " + expr.getClass() + " " + expr);
+                wrapSQLParsingException(expr);
             }
         }
         return list;
+    }
+
+    @Override
+    protected SQLStatement getAst() {
+        return ast;
     }
 }

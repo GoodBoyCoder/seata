@@ -80,11 +80,6 @@ public class MySQLInsertOrUpdateExecutor extends MySQLInsertExecutor implements 
      */
     private ArrayList<List<Object>> paramAppenderList;
 
-    /**
-     * key is unique index name, value is unique index
-     */
-    private Map<String, List<String>> beforeUniqueIndexMap = new HashMap<>();
-
     public MySQLInsertOrUpdateExecutor(StatementProxy statementProxy, StatementCallback statementCallback, SQLRecognizer sqlRecognizer) {
         super(statementProxy, statementCallback, sqlRecognizer);
     }
@@ -108,8 +103,11 @@ public class MySQLInsertOrUpdateExecutor extends MySQLInsertExecutor implements 
             beforeImage = TableRecords.empty(getTableMeta());
         }
         Object result = statementCallback.execute(statementProxy.getTargetStatement(), args);
-        TableRecords afterImage = afterImage(beforeImage);
-        prepareUndoLogAll(beforeImage, afterImage);
+        int updateCount = statementProxy.getUpdateCount();
+        if (updateCount > 0) {
+            TableRecords afterImage = afterImage(beforeImage);
+            prepareUndoLogAll(beforeImage, afterImage);
+        }
         return result;
     }
 
@@ -143,13 +141,13 @@ public class MySQLInsertOrUpdateExecutor extends MySQLInsertExecutor implements 
             return;
         }
         List<Row> beforeImageRows = beforeImage.getRows();
-        List<String> befrePrimaryValues = new ArrayList<>();
+        List<String> beforePrimaryValues = new ArrayList<>();
         for (Row r : beforeImageRows) {
             String primaryValue = "";
             for (Field f: r.primaryKeys()) {
                 primaryValue = primaryValue + f.getValue() + COLUMN_SEPARATOR;
             }
-            befrePrimaryValues.add(primaryValue);
+            beforePrimaryValues.add(primaryValue);
         }
         List<Row> insertRows = new ArrayList<>();
         List<Row> updateRows = new ArrayList<>();
@@ -159,7 +157,7 @@ public class MySQLInsertOrUpdateExecutor extends MySQLInsertExecutor implements 
             for (Field f: r.primaryKeys()) {
                 primaryValue = primaryValue + f.getValue()  + COLUMN_SEPARATOR;
             }
-            if (befrePrimaryValues.contains(primaryValue)) {
+            if (beforePrimaryValues.contains(primaryValue)) {
                 updateRows.add(r);
             } else {
                 insertRows.add(r);
@@ -218,10 +216,8 @@ public class MySQLInsertOrUpdateExecutor extends MySQLInsertExecutor implements 
         for (int i = 0; i < rows.size(); i++) {
             int finalI = i;
             List<String> wherePrimaryList = new ArrayList<>();
-            List<Object> paramAppenderTempList = new ArrayList<>();
             primaryValueMap.forEach((k, v) -> {
                 wherePrimaryList.add(k + " = " +  primaryValueMap.get(k).get(finalI) + " ");
-                paramAppenderTempList.add(primaryValueMap.get(k).get(finalI));
             });
             afterImageSql.append(" OR (").append(Joiner.on(" and ").join(wherePrimaryList)).append(") ");
         }
@@ -331,6 +327,7 @@ public class MySQLInsertOrUpdateExecutor extends MySQLInsertExecutor implements 
      * @param recognizer
      * @return map, key is column, value is paramperter
      */
+    @SuppressWarnings("lgtm[java/dereferenced-value-may-be-null]")
     public Map<String, ArrayList<Object>> buildImageParamperters(SQLInsertRecognizer recognizer) {
         List<String> duplicateKeyUpdateCloms = recognizer.getDuplicateKeyUpdate();
         if (CollectionUtils.isNotEmpty(duplicateKeyUpdateCloms)) {
@@ -356,11 +353,11 @@ public class MySQLInsertOrUpdateExecutor extends MySQLInsertExecutor implements 
                 String m = insertColumns.get(i);
                 String params = insertParamsArray[i];
                 ArrayList<Object> imageListTemp = imageParamperterMap.computeIfAbsent(m, k -> new ArrayList<>());
-                if ("?".equals(params.toString().trim())) {
+                if ("?".equals(params.trim())) {
                     ArrayList<Object> objects = parameters.get(paramsindex);
                     imageListTemp.addAll(objects);
                     paramsindex++;
-                } else if (params != null && params instanceof String) {
+                } else if (params instanceof String) {
                     // params is characterstring constant
                     if ((params.trim().startsWith("'") && params.trim().endsWith("'")) || params.trim().startsWith("\"") && params.trim().endsWith("\"")) {
                         params = params.trim();

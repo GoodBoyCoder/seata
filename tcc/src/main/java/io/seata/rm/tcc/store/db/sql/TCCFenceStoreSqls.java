@@ -24,6 +24,10 @@ import io.seata.rm.tcc.constant.TCCFenceConstant;
  */
 public class TCCFenceStoreSqls {
 
+    private TCCFenceStoreSqls() {
+        throw new IllegalStateException("Utility class");
+    }
+
     /**
      * The constant LOCAL_TCC_LOG_PLACEHOLD.
      */
@@ -33,8 +37,8 @@ public class TCCFenceStoreSqls {
      * The constant INSERT_LOCAL_TCC_LOG.
      */
     protected static final String INSERT_LOCAL_TCC_LOG = "insert into " + LOCAL_TCC_LOG_PLACEHOLD
-            + " (xid, branch_id, status, gmt_create, gmt_modified) "
-            + " values (?, ?, ?, ?, ?) ";
+            + " (xid, branch_id, action_name, status, gmt_create, gmt_modified) "
+            + " values (?, ?, ?, ?, ?, ?) ";
 
     /**
      * The constant QUERY_BY_BRANCH_ID_AND_XID.
@@ -59,7 +63,7 @@ public class TCCFenceStoreSqls {
      */
     protected static final String DELETE_BY_DATE_AND_STATUS = "delete from " + LOCAL_TCC_LOG_PLACEHOLD
             + " where gmt_modified < ? "
-            + " and status in (" + TCCFenceConstant.STATUS_COMMITTED + " , " + TCCFenceConstant.STATUS_ROLLBACKED + ")";
+            + " and status in (" + TCCFenceConstant.STATUS_COMMITTED + " , " + TCCFenceConstant.STATUS_ROLLBACKED + " , " + TCCFenceConstant.STATUS_SUSPENDED + ")";
 
     public static String getInsertLocalTCCLogSQL(String localTccTable) {
         return INSERT_LOCAL_TCC_LOG.replace(LOCAL_TCC_LOG_PLACEHOLD, localTccTable);

@@ -60,7 +60,7 @@ class DruidSQLRecognizerFactoryImpl implements SQLRecognizerFactory {
             } else if (ast instanceof SQLSelectStatement) {
                 recognizer = recognizerHolder.getSelectForUpdateRecognizer(sql, ast);
             }
-            if (recognizer != null) {
+            if (recognizer != null && recognizer.isSqlSyntaxSupports()) {
                 if (recognizers == null) {
                     recognizers = new ArrayList<>();
                 }
