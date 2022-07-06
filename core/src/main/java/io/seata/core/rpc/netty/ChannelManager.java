@@ -172,10 +172,13 @@ public class ChannelManager {
         ConcurrentMap<Integer, RpcContext> sourcePortMap = RM_CHANNELS.get(resourceId).get(applicationId).get(clientIp);
         for (ConcurrentMap.Entry<String, ConcurrentMap<String, ConcurrentMap<String, ConcurrentMap<Integer,
             RpcContext>>>> rmChannelEntry : RM_CHANNELS.entrySet()) {
+            //相同的resourceID跳过
             if (rmChannelEntry.getKey().equals(resourceId)) { continue; }
+            //applicationId -> ip -> port -> RpcContext
             ConcurrentMap<String, ConcurrentMap<String, ConcurrentMap<Integer,
                 RpcContext>>> applicationIdMap = rmChannelEntry.getValue();
             if (!applicationIdMap.containsKey(applicationId)) { continue; }
+            //只更新相同applicationID， ip——> port
             ConcurrentMap<String, ConcurrentMap<Integer,
                 RpcContext>> clientIpMap = applicationIdMap.get(applicationId);
             if (!clientIpMap.containsKey(clientIp)) { continue; }
@@ -183,6 +186,7 @@ public class ChannelManager {
             for (ConcurrentMap.Entry<Integer, RpcContext> portMapEntry : portMap.entrySet()) {
                 Integer port = portMapEntry.getKey();
                 if (!sourcePortMap.containsKey(port)) {
+                    //不是原有注册RM的端口
                     RpcContext rpcContext = portMapEntry.getValue();
                     sourcePortMap.put(port, rpcContext);
                     rpcContext.holdInResourceManagerChannels(resourceId, port);
@@ -255,6 +259,7 @@ public class ChannelManager {
         if (clientChannelMap != null && !clientChannelMap.isEmpty()) {
             for (ConcurrentMap.Entry<Integer, RpcContext> entry : clientChannelMap.entrySet()) {
                 if (entry.getKey() == exclusivePort) {
+                    //已经测试该端口的连接是无效的
                     clientChannelMap.remove(entry.getKey());
                     continue;
                 }
