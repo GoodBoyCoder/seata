@@ -201,6 +201,7 @@ public class DefaultCore implements Core {
                     return CONTINUE;
                 }
                 try {
+                    //下发分支提交
                     BranchStatus branchStatus = getCore(branchSession.getBranchType()).branchCommit(globalSession, branchSession);
                     if (isXaerNotaTimeout(globalSession,branchStatus)) {
                         LOGGER.info("Commit branch XAER_NOTA retry timeout, xid = {} branchId = {}", globalSession.getXid(), branchSession.getBranchId());
@@ -299,12 +300,15 @@ public class DefaultCore implements Core {
             success = getCore(BranchType.SAGA).doGlobalRollback(globalSession, retrying);
         } else {
             Boolean result = SessionHelper.forEach(globalSession.getReverseSortedBranches(), branchSession -> {
+                //回滚分支事务
                 BranchStatus currentBranchStatus = branchSession.getStatus();
                 if (currentBranchStatus == BranchStatus.PhaseOne_Failed) {
+                    //一阶段执行失败直接remove
                     SessionHelper.removeBranch(globalSession, branchSession, !retrying);
                     return CONTINUE;
                 }
                 try {
+                    //其他状态需要下发RM（rollback请求）
                     BranchStatus branchStatus = branchRollback(globalSession, branchSession);
                     if (isXaerNotaTimeout(globalSession, branchStatus)) {
                         LOGGER.info("Rollback branch XAER_NOTA retry timeout, xid = {} branchId = {}", globalSession.getXid(), branchSession.getBranchId());
@@ -336,12 +340,13 @@ public class DefaultCore implements Core {
                     throw new TransactionException(ex);
                 }
             });
-            // Return if the result is not null
+            // Return if the result is not null,即所有分支事务回滚成功
             if (result != null) {
                 return result;
             }
         }
 
+        //回滚失败或者Sage事务回滚处理
         // In db mode, lock and branch data residual problems may occur.
         // Therefore, execution needs to be delayed here and cannot be executed synchronously.
         if (success) {

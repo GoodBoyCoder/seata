@@ -158,6 +158,7 @@ public class NettyServerBootstrap implements RemotingBootstrap {
                         .addLast(new ProtocolV1Decoder())
                         .addLast(new ProtocolV1Encoder());
                     if (channelHandlers != null) {
+                        //ServerHandler——>processMessage(ctx, (RpcMessage) msg);
                         addChannelPipelineLast(ch, channelHandlers);
                     }
 
